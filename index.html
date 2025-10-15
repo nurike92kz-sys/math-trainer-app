@@ -60,6 +60,54 @@
         .hidden {
             display: none;
         }
+        .back-btn {
+            background: #6c757d;
+            margin-top: 10px;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .stat-item {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+        }
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #667eea;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            margin: 5px 0;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            transition: width 0.3s;
+        }
         #debug {
             position: fixed;
             top: 10px;
@@ -71,10 +119,6 @@
             z-index: 10000;
             font-size: 14px;
         }
-        .back-btn {
-            background: #6c757d;
-            margin-top: 10px;
-        }
     </style>
 </head>
 <body>
@@ -85,17 +129,43 @@
         <div id="mainScreen">
             <div style="text-align: center;">
                 <h1>🎓 Математический тренажёр</h1>
-                <p>Простая версия с викториной</p>
+                <p>Версия с прогрессом</p>
+            </div>
+
+            <div class="user-info">
+                <div class="avatar" id="userAvatar">U</div>
+                <div>
+                    <div><strong id="userName">Ученик</strong></div>
+                    <div>Уровень: <span id="userLevel">Новичок</span></div>
+                </div>
             </div>
             
             <div class="card">
+                <h3>📊 Ваша статистика</h3>
+                <div class="stats">
+                    <div class="stat-item">
+                        <div>✅</div>
+                        <div id="totalCorrect">0</div>
+                        <small>Правильно</small>
+                    </div>
+                    <div class="stat-item">
+                        <div>📝</div>
+                        <div id="totalAnswered">0</div>
+                        <small>Всего</small>
+                    </div>
+                    <div class="stat-item">
+                        <div>🎯</div>
+                        <div id="successRate">0%</div>
+                        <small>Успешность</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>📚 Выберите тему</h3>
                 <button onclick="startQuiz('trigonometry')">📐 Тригонометрия</button>
                 <button onclick="startQuiz('algebra')">🔢 Алгебра</button>
-                <button onclick="testTelegram()">🤖 Проверить Telegram</button>
-            </div>
-            
-            <div class="card">
-                <div id="status">Статус: Загрузка...</div>
+                <button onclick="showProgress()">📈 Мой прогресс</button>
             </div>
         </div>
 
@@ -103,6 +173,7 @@
         <div id="quizScreen" class="hidden">
             <div style="text-align: center; margin-bottom: 20px;">
                 <h2 id="quizTitle">Викторина</h2>
+                <div>Вопрос <span id="currentQuestion">1</span> из <span id="totalQuestions">5</span></div>
             </div>
             
             <div class="card">
@@ -123,38 +194,84 @@
             <div class="card">
                 <h2 id="resultTitle">Результат</h2>
                 <p id="resultMessage"></p>
-                <p id="explanationText"></p>
+                <p id="explanationText" style="font-style: italic;"></p>
                 <button onclick="nextQuestion()">Следующий вопрос</button>
                 <button class="back-btn" onclick="backToMain()">← На главную</button>
             </div>
         </div>
+
+        <!-- Экран прогресса -->
+        <div id="progressScreen" class="hidden">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <h2>📈 Мой прогресс</h2>
+            </div>
+            
+            <div class="card">
+                <h3>Общая статистика</h3>
+                <div class="stats">
+                    <div class="stat-item">
+                        <div>📚</div>
+                        <div id="progressTotalCorrect">0</div>
+                        <small>Правильно</small>
+                    </div>
+                    <div class="stat-item">
+                        <div>📝</div>
+                        <div id="progressTotalAnswered">0</div>
+                        <small>Всего ответов</small>
+                    </div>
+                    <div class="stat-item">
+                        <div>⭐</div>
+                        <div id="masteredFormulas">0</div>
+                        <small>Выучено</small>
+                    </div>
+                </div>
+                
+                <h3 style="margin-top: 20px;">Прогресс по темам</h3>
+                <div id="topicsProgress">
+                    <!-- Прогресс по темам появится здесь -->
+                </div>
+            </div>
+            
+            <button class="back-btn" onclick="backToMain()">← На главную</button>
+        </div>
     </div>
 
     <script>
-        // Простейший код который точно работает
-        console.log('=== СКРИПТ НАЧАЛ РАБОТУ ===');
-        
+        // Глобальные переменные
         const debug = document.getElementById('debug');
-        const status = document.getElementById('status');
-        
-        // База вопросов
+        let userProgress = {};
+        let userId = '';
+        let currentTopic = '';
+        let currentQuestionIndex = 0;
+
+        // База вопросов с formulaId для отслеживания прогресса
         const questions = {
             trigonometry: [
                 {
+                    formulaId: 'sin_90',
                     question: "Чему равен sin(90°)?",
                     options: ["0", "1", "-1", "0.5"],
                     correct: 1,
                     explanation: "sin(90°) = 1 - это максимальное значение синуса"
                 },
                 {
+                    formulaId: 'cos_0', 
                     question: "Чему равен cos(0°)?",
                     options: ["0", "1", "-1", "0.5"],
-                    correct: 1, 
+                    correct: 1,
                     explanation: "cos(0°) = 1 - это максимальное значение косинуса"
+                },
+                {
+                    formulaId: 'sin_sum',
+                    question: "Чему равен sin(α + β)?",
+                    options: ["sinαcosβ - cosαsinβ", "sinαcosβ + cosαsinβ", "cosαcosβ - sinαsinβ", "sinα + sinβ"],
+                    correct: 1,
+                    explanation: "sin(α + β) = sinαcosβ + cosαsinβ - формула синуса суммы"
                 }
             ],
             algebra: [
                 {
+                    formulaId: 'square_sum',
                     question: "Чему равен (a + b)²?",
                     options: ["a² + 2ab + b²", "a² + b²", "a² - 2ab + b²", "a² - b²"],
                     correct: 0,
@@ -163,8 +280,14 @@
             ]
         };
 
-        let currentTopic = '';
-        let currentQuestionIndex = 0;
+        // Система уровней
+        const levels = {
+            1: { name: "Новичок", required: 0 },
+            2: { name: "Ученик", required: 5 },
+            3: { name: "Знаток", required: 15 },
+            4: { name: "Эксперт", required: 30 },
+            5: { name: "Мастер", required: 50 }
+        };
 
         // Функция обновления debug
         function updateDebug(message) {
@@ -173,14 +296,85 @@
             }
             console.log('DEBUG:', message);
         }
-        
-        // Функция обновления статуса
-        function updateStatus(message) {
-            if (status) {
-                status.textContent = 'Статус: ' + message;
+
+        // Инициализация пользователя
+        function initUser() {
+            // Получаем ID пользователя
+            if (window.Telegram && Telegram.WebApp && Telegram.WebApp.initDataUnsafe && Telegram.WebApp.initDataUnsafe.user) {
+                const telegramUser = Telegram.WebApp.initDataUnsafe.user;
+                userId = telegramUser.id.toString();
+                
+                // Заполняем информацию о пользователе
+                document.getElementById('userName').textContent = telegramUser.first_name || 'Ученик';
+                document.getElementById('userAvatar').textContent = telegramUser.first_name ? telegramUser.first_name[0].toUpperCase() : 'U';
+            } else {
+                // Для тестирования
+                userId = 'test_user_' + Date.now();
+                document.getElementById('userName').textContent = 'Ученик (тест)';
+                document.getElementById('userAvatar').textContent = 'T';
             }
+            
+            // Загружаем прогресс
+            loadUserProgress();
         }
-        
+
+        // Загружаем прогресс пользователя
+        function loadUserProgress() {
+            const savedProgress = localStorage.getItem(`math_progress_${userId}`);
+            
+            if (savedProgress) {
+                userProgress = JSON.parse(savedProgress);
+                updateDebug('Прогресс загружен');
+            } else {
+                // Создаем новый профиль
+                userProgress = {
+                    userId: userId,
+                    totalCorrect: 0,
+                    totalAnswered: 0,
+                    formulas: {},
+                    level: 1,
+                    createdAt: new Date().toISOString()
+                };
+                updateDebug('Создан новый профиль');
+            }
+            
+            updateUserStats();
+        }
+
+        // Сохраняем прогресс
+        function saveUserProgress() {
+            localStorage.setItem(`math_progress_${userId}`, JSON.stringify(userProgress));
+            updateUserStats();
+        }
+
+        // Обновляем статистику на главном экране
+        function updateUserStats() {
+            document.getElementById('totalCorrect').textContent = userProgress.totalCorrect || 0;
+            document.getElementById('totalAnswered').textContent = userProgress.totalAnswered || 0;
+            
+            const successRate = userProgress.totalAnswered > 0 
+                ? Math.round((userProgress.totalCorrect / userProgress.totalAnswered) * 100) 
+                : 0;
+            document.getElementById('successRate').textContent = successRate + '%';
+            
+            // Определяем уровень
+            const userLevel = calculateUserLevel();
+            document.getElementById('userLevel').textContent = levels[userLevel].name;
+        }
+
+        // Рассчитываем уровень пользователя
+        function calculateUserLevel() {
+            const totalCorrect = userProgress.totalCorrect || 0;
+            
+            for (let level = 5; level >= 1; level--) {
+                if (totalCorrect >= levels[level].required) {
+                    userProgress.level = level;
+                    return level;
+                }
+            }
+            return 1;
+        }
+
         // Запуск викторины
         function startQuiz(topic) {
             updateDebug('Запускаем викторину: ' + topic);
@@ -188,26 +382,25 @@
             currentTopic = topic;
             currentQuestionIndex = 0;
             
-            // Прячем главный экран, показываем викторину
+            // Перемешиваем вопросы
+            shuffleArray(questions[topic]);
+            
             document.getElementById('mainScreen').classList.add('hidden');
             document.getElementById('quizScreen').classList.remove('hidden');
             document.getElementById('resultScreen').classList.add('hidden');
             
-            // Устанавливаем заголовок
             const titles = {
                 trigonometry: '📐 Тригонометрия',
                 algebra: '🔢 Алгебра'
             };
             document.getElementById('quizTitle').textContent = titles[topic] || topic;
+            document.getElementById('totalQuestions').textContent = questions[topic].length;
             
-            // Показываем первый вопрос
             showQuestion();
         }
         
         // Показ вопроса
         function showQuestion() {
-            updateDebug('Показываем вопрос ' + currentQuestionIndex);
-            
             const topicQuestions = questions[currentTopic];
             
             if (!topicQuestions || currentQuestionIndex >= topicQuestions.length) {
@@ -219,30 +412,57 @@
             const question = topicQuestions[currentQuestionIndex];
             const optionsContainer = document.getElementById('optionsContainer');
             
-            // Очищаем контейнер
             optionsContainer.innerHTML = '';
-            
-            // Показываем вопрос
             document.getElementById('questionText').textContent = question.question;
+            document.getElementById('currentQuestion').textContent = currentQuestionIndex + 1;
+            
+            // Перемешиваем варианты ответов
+            const shuffledOptions = [...question.options];
+            shuffleArray(shuffledOptions);
+            const correctAnswerIndex = shuffledOptions.indexOf(question.options[question.correct]);
             
             // Добавляем варианты ответов
-            question.options.forEach((option, index) => {
+            shuffledOptions.forEach((option, index) => {
                 const optionElement = document.createElement('div');
                 optionElement.className = 'option';
                 optionElement.textContent = option;
                 optionElement.onclick = function() {
-                    checkAnswer(index, question.correct, question.explanation);
+                    checkAnswer(index, correctAnswerIndex, question.formulaId, question.explanation);
                 };
                 optionsContainer.appendChild(optionElement);
             });
         }
         
         // Проверка ответа
-        function checkAnswer(selectedIndex, correctIndex, explanation) {
-            updateDebug('Проверяем ответ: ' + selectedIndex + ' vs ' + correctIndex);
-            
+        function checkAnswer(selectedIndex, correctIndex, formulaId, explanation) {
             const options = document.querySelectorAll('.option');
             const isCorrect = selectedIndex === correctIndex;
+            
+            // Обновляем общую статистику
+            userProgress.totalAnswered = (userProgress.totalAnswered || 0) + 1;
+            if (isCorrect) {
+                userProgress.totalCorrect = (userProgress.totalCorrect || 0) + 1;
+            }
+            
+            // Обновляем прогресс по формуле
+            if (!userProgress.formulas) userProgress.formulas = {};
+            if (!userProgress.formulas[formulaId]) {
+                userProgress.formulas[formulaId] = {
+                    correctCount: 0,
+                    totalAttempts: 0,
+                    lastAnswered: new Date().toISOString()
+                };
+            }
+            
+            userProgress.formulas[formulaId].totalAttempts++;
+            userProgress.formulas[formulaId].lastAnswered = new Date().toISOString();
+            
+            if (isCorrect) {
+                userProgress.formulas[formulaId].correctCount++;
+            }
+            
+            // Сохраняем прогресс
+            saveUserProgress();
             
             // Подсвечиваем ответы
             options.forEach((option, index) => {
@@ -251,18 +471,23 @@
                 } else if (index === selectedIndex && !isCorrect) {
                     option.classList.add('incorrect');
                 }
-                option.style.pointerEvents = 'none'; // Блокируем клики
+                option.style.pointerEvents = 'none';
             });
             
-            // Показываем результат через 1 секунду
+            // Показываем результат
             setTimeout(() => {
                 document.getElementById('quizScreen').classList.add('hidden');
                 document.getElementById('resultScreen').classList.remove('hidden');
                 
                 document.getElementById('resultTitle').textContent = isCorrect ? '✅ Правильно!' : '❌ Неправильно';
                 document.getElementById('resultMessage').textContent = isCorrect ? 
-                    'Отличный ответ!' : 'Попробуйте ещё раз';
+                    'Отличная работа!' : 'Попробуйте ещё раз';
                 document.getElementById('explanationText').textContent = explanation;
+                
+                // Если формула выучена (3+ правильных ответа)
+                if (isCorrect && userProgress.formulas[formulaId].correctCount >= 3) {
+                    document.getElementById('resultMessage').textContent += ' 🎉 Формула выучена!';
+                }
                 
             }, 1000);
         }
@@ -279,27 +504,92 @@
         function backToMain() {
             document.getElementById('quizScreen').classList.add('hidden');
             document.getElementById('resultScreen').classList.add('hidden');
+            document.getElementById('progressScreen').classList.add('hidden');
             document.getElementById('mainScreen').classList.remove('hidden');
+            updateUserStats();
         }
-        
-        // Тест Telegram
-        function testTelegram() {
-            updateDebug('Проверяем Telegram...');
+
+        // Показываем прогресс
+        function showProgress() {
+            document.getElementById('mainScreen').classList.add('hidden');
+            document.getElementById('progressScreen').classList.remove('hidden');
             
-            if (window.Telegram && Telegram.WebApp) {
-                alert('✅ Telegram Web App доступен!\nВерсия: ' + (Telegram.WebApp.version || 'неизвестна'));
-                updateDebug('Telegram: ДА');
-            } else {
-                alert('❌ Telegram Web App НЕ доступен');
-                updateDebug('Telegram: НЕТ');
+            // Обновляем статистику
+            document.getElementById('progressTotalCorrect').textContent = userProgress.totalCorrect || 0;
+            document.getElementById('progressTotalAnswered').textContent = userProgress.totalAnswered || 0;
+            
+            // Считаем выученные формулы
+            const masteredFormulas = Object.values(userProgress.formulas || {}).filter(
+                formula => formula.correctCount >= 3
+            ).length;
+            document.getElementById('masteredFormulas').textContent = masteredFormulas;
+            
+            // Показываем прогресс по темам
+            renderTopicsProgress();
+        }
+
+        // Рендерим прогресс по темам
+        function renderTopicsProgress() {
+            const topicsProgress = document.getElementById('topicsProgress');
+            topicsProgress.innerHTML = '';
+            
+            for (const [topicKey, topicQuestions] of Object.entries(questions)) {
+                const topicStats = calculateTopicProgress(topicKey);
+                const progressPercent = topicStats.total > 0 ? (topicStats.learned / topicStats.total) * 100 : 0;
+                
+                const progressHTML = `
+                    <div style="margin: 10px 0;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <strong>${getTopicName(topicKey)}</strong>
+                            <span>${topicStats.learned}/${topicStats.total}</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${progressPercent}%"></div>
+                        </div>
+                    </div>
+                `;
+                
+                topicsProgress.innerHTML += progressHTML;
             }
         }
-        
+
+        // Рассчитываем прогресс по теме
+        function calculateTopicProgress(topicKey) {
+            const topicQuestions = questions[topicKey] || [];
+            let learned = 0;
+            
+            topicQuestions.forEach(question => {
+                const formulaProgress = userProgress.formulas?.[question.formulaId];
+                if (formulaProgress && formulaProgress.correctCount >= 3) {
+                    learned++;
+                }
+            });
+            
+            return {
+                learned,
+                total: topicQuestions.length
+            };
+        }
+
+        // Вспомогательные функции
+        function getTopicName(topicKey) {
+            const names = {
+                trigonometry: '📐 Тригонометрия',
+                algebra: '🔢 Алгебра'
+            };
+            return names[topicKey] || topicKey;
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
         // Инициализация при загрузке
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM загружен');
             updateDebug('DOM загружен');
-            updateStatus('Готов к работе');
             
             // Инициализация Telegram
             if (window.Telegram && Telegram.WebApp) {
@@ -317,16 +607,16 @@
                     updateDebug('Ошибка Telegram: ' + error.message);
                 }
             }
+            
+            // Инициализация пользователя
+            initUser();
         });
         
-        // Обработчик глобальных ошибок
+        // Обработчик ошибок
         window.addEventListener('error', function(e) {
             console.error('Глобальная ошибка:', e);
             updateDebug('ОШИБКА: ' + e.message);
         });
-        
-        console.log('=== СКРИПТ ЗАГРУЖЕН ===');
-        updateDebug('Скрипт загружен');
     </script>
 </body>
 </html>
