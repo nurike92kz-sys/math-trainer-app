@@ -1,3 +1,17 @@
+<!-- Добавь этот div перед закрывающим </body> -->
+<div id="debug" style="position: fixed; top: 10px; left: 10px; background: red; color: white; padding: 10px; z-index: 9999; display: none;">
+    Debug Info
+</div>
+
+<script>
+// Добавь эту функцию для отладки
+function showDebug(message) {
+    const debug = document.getElementById('debug');
+    debug.style.display = 'block';
+    debug.innerHTML = message;
+    console.log('DEBUG:', message);
+}
+</script>
 <!DOCTYPE html>
 <html lang="ru">
 <head>
