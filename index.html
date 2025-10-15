@@ -1,387 +1,199 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Математический тренажёр</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-            color: white;
-        }
-        
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-        
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        
-        .card {
-            background: white;
-            color: black;
-            border-radius: 20px;
-            padding: 25px;
-            margin-bottom: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-        }
-        
-        .question {
-            font-size: 18px;
-            margin-bottom: 20px;
-            font-weight: 500;
-        }
-        
-        .options {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        
-        .option {
-            background: #f8f9fa;
-            border: 2px solid #e9ecef;
-            padding: 15px;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .option:hover {
-            background: #e9ecef;
-        }
-        
-        .option.correct {
-            background: #d4edda;
-            border-color: #c3e6cb;
-        }
-        
-        .option.incorrect {
-            background: #f8d7da;
-            border-color: #f5c6cb;
-        }
-        
-        .hidden {
-            display: none;
-        }
-        
-        button {
-            background: #667eea;
-            color: white;
-            border: none;
-            padding: 15px 25px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 16px;
-            margin: 5px;
-            width: 100%;
-        }
-        
-        .topic-btn {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            margin: 10px 0;
-        }
-        
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin: 15px 0;
-        }
-        
-        .stat-item {
-            background: #f8f9fa;
-            padding: 10px;
-            border-radius: 8px;
-            text-align: center;
-        }
-        
-        .loading {
-            text-align: center;
-            padding: 20px;
-        }
-        
-        .error {
-            background: #f8d7da;
-            color: #721c24;
-            padding: 15px;
-            border-radius: 10px;
-            margin: 10px 0;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <!-- Экран загрузки -->
-        <div id="loadingScreen">
-            <div class="card">
-                <div class="loading">
-                    <h2>🔄 Загрузка...</h2>
-                    <p>Загружаем вопросы из базы данных</p>
-                </div>
-            </div>
-        </div>
+<script>
+    // Инициализация Telegram Web App
+    if (window.Telegram && Telegram.WebApp) {
+        Telegram.WebApp.ready();
+        Telegram.WebApp.expand();
+        Telegram.WebApp.setHeaderColor('#667eea');
+        Telegram.WebApp.setBackgroundColor('#667eea');
+    }
 
-        <!-- Главный экран -->
-        <div id="mainScreen" class="hidden">
-            <div class="header">
-                <h1>🎓 Математический тренажёр</h1>
-                <p>Изучай формулы с удовольствием!</p>
-            </div>
+    let questions = {};
+    let currentTopic = '';
+    let currentQuestionIndex = 0;
+    let correctAnswers = 0;
+    let totalAnswers = 0;
 
-            <div class="card">
-    <h3>📚 Выберите тему</h3>
-    <button onclick="startQuiz('trigonometry')">📐 Тригонометрия</button>
-    <button onclick="startQuiz('logarithms')">📊 Логарифмы</button>
-    <button onclick="startQuiz('derivatives')">📈 Производные</button>
-    <button onclick="showProgress()">📊 Мой прогресс</button>
-</div>
-
+    // Загружаем вопросы из JSON файла
+    async function loadQuestions() {
+        try {
+            console.log('🔄 Начинаем загрузку вопросов...');
+            const response = await fetch('questions.json');
             
-            <div class="card">
-                <h3>📊 Твоя статистика</h3>
-                <div class="stats">
-                    <div class="stat-item">
-                        <div>✅</div>
-                        <div id="correctCount">0</div>
-                        <small>Правильно</small>
-                    </div>
-                    <div class="stat-item">
-                        <div>📝</div>
-                        <div id="totalCount">0</div>
-                        <small>Всего</small>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Экран викторины -->
-        <div id="quizScreen" class="hidden">
-            <div class="header">
-                <h2 id="topicTitle">Тригонометрия</h2>
-                <p>Вопрос <span id="currentQ">1</span> из <span id="totalQ">5</span></p>
-            </div>
-            
-            <div class="card">
-                <div class="question" id="questionText">Загрузка...</div>
-                <div class="options" id="optionsContainer">
-                    <!-- Варианты появятся здесь -->
-                </div>
-            </div>
-            
-            <div class="card hidden" id="resultCard">
-                <h3 id="resultText"></h3>
-                <p id="explanationText"></p>
-                <button onclick="nextQuestion()">Следующий вопрос</button>
-            </div>
-        </div>
-
-        <!-- Экран ошибки -->
-        <div id="errorScreen" class="hidden">
-            <div class="card">
-                <h2>❌ Ошибка загрузки</h2>
-                <div class="error" id="errorMessage"></div>
-                <button onclick="location.reload()">🔄 Перезагрузить</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // Инициализация Telegram Web App
-        if (window.Telegram && Telegram.WebApp) {
-            Telegram.WebApp.ready();
-            Telegram.WebApp.expand();
-            Telegram.WebApp.setHeaderColor('#667eea');
-            Telegram.WebApp.setBackgroundColor('#667eea');
-        }
-
-        let questions = {};
-        let currentTopic = '';
-        let currentQuestionIndex = 0;
-        let correctAnswers = 0;
-        let totalAnswers = 0;
-
-        // Загружаем вопросы из JSON файла
-        async function loadQuestions() {
-            try {
-                console.log('🔄 Начинаем загрузку вопросов...');
-                const response = await fetch('questions.json');
-                
-                if (!response.ok) {
-                    throw new Error(`Ошибка HTTP: ${response.status}`);
-                }
-                
-                questions = await response.json();
-                console.log('✅ Вопросы загружены:', questions);
-                
-                // Показываем главный экран
-                showMainScreen();
-                
-            } catch (error) {
-                console.error('❌ Ошибка загрузки:', error);
-                showError(`Не удалось загрузить вопросы: ${error.message}`);
+            if (!response.ok) {
+                throw new Error(`Ошибка HTTP: ${response.status}`);
             }
+            
+            questions = await response.json();
+            console.log('✅ Вопросы загружены:', questions);
+            
+            // Показываем главный экран
+            showMainScreen();
+            
+        } catch (error) {
+            console.error('❌ Ошибка загрузки:', error);
+            showError(`Не удалось загрузить вопросы: ${error.message}`);
         }
+    }
 
-        function showMainScreen() {
-            document.getElementById('loadingScreen').classList.add('hidden');
-            document.getElementById('mainScreen').classList.remove('hidden');
-            
-            const topicsContainer = document.getElementById('topicsContainer');
-            topicsContainer.innerHTML = '';
-            
-            // Создаем кнопки для каждой темы
-            const topicNames = {
-                trigonometry: '📐 Тригонометрия',
-                algebra: '🔢 Алгебра', 
-                geometry: '📏 Геометрия',
-                logarithms: '📊 Логарифмы'
-            };
-            
-            for (const [topicKey, topicName] of Object.entries(topicNames)) {
-                if (questions[topicKey] && questions[topicKey].length > 0) {
-                    const button = document.createElement('button');
-                    button.className = 'topic-btn';
-                    button.innerHTML = `${topicName} <small>(${questions[topicKey].length} вопросов)</small>`;
-                    button.onclick = () => startTopic(topicKey);
-                    topicsContainer.appendChild(button);
-                }
-            }
+    function showMainScreen() {
+        document.getElementById('loadingScreen').classList.add('hidden');
+        document.getElementById('mainScreen').classList.remove('hidden');
+        
+        // Обновляем статистику
+        updateStats();
+    }
+
+    function showError(message) {
+        document.getElementById('loadingScreen').classList.add('hidden');
+        document.getElementById('errorScreen').classList.remove('hidden');
+        document.getElementById('errorMessage').textContent = message;
+    }
+
+    // Функция для кнопок (startQuiz вместо startTopic)
+    function startQuiz(topic) {
+        currentTopic = topic;
+        currentQuestionIndex = 0;
+        correctAnswers = 0;
+        totalAnswers = 0;
+        updateStats();
+        
+        // Проверяем, есть ли вопросы для этой темы
+        if (!questions[topic] || questions[topic].length === 0) {
+            alert('Вопросы для этой темы еще не загружены');
+            return;
         }
+        
+        // Перемешиваем вопросы
+        shuffleArray(questions[topic]);
+        
+        // Показываем экран викторины
+        document.getElementById('mainScreen').classList.add('hidden');
+        document.getElementById('quizScreen').classList.remove('hidden');
+        
+        // Устанавливаем название темы
+        const topicNames = {
+            trigonometry: '📐 Тригонометрия',
+            logarithms: '📊 Логарифмы',
+            derivatives: '📈 Производные'
+        };
+        document.getElementById('topicTitle').textContent = topicNames[topic] || topic;
+        document.getElementById('totalQ').textContent = questions[topic].length;
+        
+        showQuestion();
+    }
 
-        function showError(message) {
-            document.getElementById('loadingScreen').classList.add('hidden');
-            document.getElementById('errorScreen').classList.remove('hidden');
-            document.getElementById('errorMessage').textContent = message;
+    function showQuestion() {
+        if (!questions[currentTopic] || currentQuestionIndex >= questions[currentTopic].length) {
+            endQuiz();
+            return;
         }
+        
+        const question = questions[currentTopic][currentQuestionIndex];
+        const optionsContainer = document.getElementById('optionsContainer');
+        const resultCard = document.getElementById('resultCard');
+        
+        // Сбрасываем состояние
+        optionsContainer.innerHTML = '';
+        resultCard.classList.add('hidden');
+        
+        // Показываем вопрос
+        document.getElementById('questionText').textContent = question.question;
+        document.getElementById('currentQ').textContent = currentQuestionIndex + 1;
+        
+        // Перемешиваем варианты ответов
+        const shuffledOptions = [...question.options];
+        shuffleArray(shuffledOptions);
+        const correctAnswerIndex = shuffledOptions.indexOf(question.options[question.correct]);
+        
+        // Добавляем варианты ответов
+        shuffledOptions.forEach((option, index) => {
+            const optionElement = document.createElement('div');
+            optionElement.className = 'option';
+            optionElement.textContent = option;
+            optionElement.onclick = () => checkAnswer(index, correctAnswerIndex, question.explanation);
+            optionsContainer.appendChild(optionElement);
+        });
+    }
 
-        function startTopic(topic) {
-            currentTopic = topic;
-            currentQuestionIndex = 0;
-            
-            // Перемешиваем вопросы
-            shuffleArray(questions[topic]);
-            
-            // Показываем экран викторины
-            document.getElementById('mainScreen').classList.add('hidden');
-            document.getElementById('quizScreen').classList.remove('hidden');
-            
-            // Устанавливаем название темы
-            const topicNames = {
-                trigonometry: '📐 Тригонометрия',
-                algebra: '🔢 Алгебра', 
-                geometry: '📏 Геометрия',
-                logarithms: '📊 Логарифмы'
-            };
-            document.getElementById('topicTitle').textContent = topicNames[topic];
-            document.getElementById('totalQ').textContent = questions[topic].length;
-            
+    function checkAnswer(selectedIndex, correctIndex, explanation) {
+        const options = document.querySelectorAll('.option');
+        const resultCard = document.getElementById('resultCard');
+        const resultText = document.getElementById('resultText');
+        const explanationText = document.getElementById('explanationText');
+        
+        // Блокируем кнопки
+        options.forEach(opt => opt.style.pointerEvents = 'none');
+        
+        // Обновляем статистику
+        totalAnswers++;
+        
+        // Проверяем ответ
+        if (selectedIndex === correctIndex) {
+            options[selectedIndex].classList.add('correct');
+            resultText.textContent = '✅ Правильно!';
+            resultText.style.color = '#4CAF50';
+            correctAnswers++;
+        } else {
+            options[selectedIndex].classList.add('incorrect');
+            options[correctIndex].classList.add('correct');
+            resultText.textContent = '❌ Неправильно';
+            resultText.style.color = '#f44336';
+        }
+        
+        explanationText.textContent = explanation;
+        resultCard.classList.remove('hidden');
+        
+        // Обновляем статистику на главном экране
+        updateStats();
+    }
+
+    function nextQuestion() {
+        currentQuestionIndex++;
+        
+        if (currentQuestionIndex >= questions[currentTopic].length) {
+            endQuiz();
+        } else {
             showQuestion();
         }
+    }
 
-        function showQuestion() {
-            const question = questions[currentTopic][currentQuestionIndex];
-            const optionsContainer = document.getElementById('optionsContainer');
-            const resultCard = document.getElementById('resultCard');
-            
-            // Сбрасываем состояние
-            optionsContainer.innerHTML = '';
-            resultCard.classList.add('hidden');
-            
-            // Показываем вопрос
-            document.getElementById('questionText').textContent = question.question;
-            document.getElementById('currentQ').textContent = currentQuestionIndex + 1;
-            
-            // Перемешиваем варианты ответов
-            const shuffledOptions = [...question.options];
-            shuffleArray(shuffledOptions);
-            const correctAnswerIndex = shuffledOptions.indexOf(question.options[question.correct]);
-            
-            // Добавляем варианты ответов
-            shuffledOptions.forEach((option, index) => {
-                const optionElement = document.createElement('div');
-                optionElement.className = 'option';
-                optionElement.textContent = option;
-                optionElement.onclick = () => checkAnswer(index, correctAnswerIndex);
-                optionsContainer.appendChild(optionElement);
+    function endQuiz() {
+        // Конец викторины
+        if (window.Telegram && Telegram.WebApp) {
+            Telegram.WebApp.showPopup({
+                title: '🎉 Поздравляем!',
+                message: `Вы завершили тему! Правильных ответов: ${correctAnswers}/${questions[currentTopic].length}`
             });
         }
+        
+        // Возвращаемся на главный экран
+        backToMain();
+    }
 
-        function checkAnswer(selectedIndex, correctIndex) {
-            const options = document.querySelectorAll('.option');
-            const resultCard = document.getElementById('resultCard');
-            const resultText = document.getElementById('resultText');
-            const explanationText = document.getElementById('explanationText');
-            
-            // Блокируем кнопки
-            options.forEach(opt => opt.style.pointerEvents = 'none');
-            
-            // Обновляем статистику
-            totalAnswers++;
-            document.getElementById('totalCount').textContent = totalAnswers;
-            
-            // Проверяем ответ
-            if (selectedIndex === correctIndex) {
-                options[selectedIndex].classList.add('correct');
-                resultText.textContent = '✅ Правильно!';
-                resultText.style.color = '#4CAF50';
-                correctAnswers++;
-                document.getElementById('correctCount').textContent = correctAnswers;
-            } else {
-                options[selectedIndex].classList.add('incorrect');
-                options[correctIndex].classList.add('correct');
-                resultText.textContent = '❌ Неправильно';
-                resultText.style.color = '#f44336';
-            }
-            
-            explanationText.textContent = questions[currentTopic][currentQuestionIndex].explanation;
-            resultCard.classList.remove('hidden');
+    function backToMain() {
+        document.getElementById('quizScreen').classList.add('hidden');
+        document.getElementById('resultCard').classList.add('hidden');
+        document.getElementById('mainScreen').classList.remove('hidden');
+    }
+
+    function showProgress() {
+        alert(`📊 Ваша статистика:\n\n✅ Правильных ответов: ${correctAnswers}\n📝 Всего ответов: ${totalAnswers}\n🎯 Успешность: ${totalAnswers > 0 ? Math.round((correctAnswers / totalAnswers) * 100) : 0}%`);
+    }
+
+    function updateStats() {
+        document.getElementById('correctCount').textContent = correctAnswers;
+        document.getElementById('totalCount').textContent = totalAnswers;
+    }
+
+    // Функция для перемешивания массива
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
         }
+        return array;
+    }
 
-        function nextQuestion() {
-            currentQuestionIndex++;
-            
-            if (currentQuestionIndex >= questions[currentTopic].length) {
-                // Конец викторины
-                if (window.Telegram && Telegram.WebApp) {
-                    Telegram.WebApp.showPopup({
-                        title: '🎉 Поздравляем!',
-                        message: `Вы завершили тему! Правильных ответов: ${correctAnswers}/${questions[currentTopic].length}`
-                    });
-                }
-                
-                // Возвращаемся на главный экран
-                document.getElementById('quizScreen').classList.add('hidden');
-                document.getElementById('mainScreen').classList.remove('hidden');
-            } else {
-                showQuestion();
-            }
-        }
-
-        // Функция для перемешивания массива
-        function shuffleArray(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }
-            return array;
-        }
-
-        // Загружаем вопросы при старте
-        document.addEventListener('DOMContentLoaded', loadQuestions);
-    </script>
-</body>
-</html>
+    // Загружаем вопросы при старте
+    document.addEventListener('DOMContentLoaded', loadQuestions);
+</script>
