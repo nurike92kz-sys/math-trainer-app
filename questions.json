@@ -1,55 +1,241 @@
 {
-  "trigonometry": [
-    {
-      "formulaId": "sin_sum",
-      "question": "Чему равен sin(α + β)?",
-      "options": ["sinαcosβ - cosαsinβ", "sinαcosβ + cosαsinβ", "cosαcosβ - sinαsinβ", "sinα + sinβ"],
-      "correct": 1,
-      "explanation": "sin(α + β) = sinαcosβ + cosαsinβ - формула синуса суммы"
-    },
-    {
-      "formulaId": "cos_double",
-      "question": "Чему равен cos(2α)?",
-      "options": ["cos²α - sin²α", "2cosα", "1 - sin²α", "2sinαcosα"],
-      "correct": 0,
-      "explanation": "cos(2α) = cos²α - sin²α = 2cos²α - 1 = 1 - 2sin²α"
-    },
-    {
-      "formulaId": "tan_definition",
-      "question": "Что такое tgα?",
-      "options": ["sinα/cosα", "cosα/sinα", "1/sinα", "1/cosα"],
-      "correct": 0,
-      "explanation": "tgα = sinα/cosα - отношение синуса к косинусу"
-    },
-    {
-      "formulaId": "basic_identity",
-      "question": "Основное тригонометрическое тождество?",
-      "options": ["sin²α + cos²α = 1", "sinα + cosα = 1", "tgα × ctgα = 1", "1 + tg²α = 1/cos²α"],
-      "correct": 0,
-      "explanation": "sin²α + cos²α = 1 - основное тригонометрическое тождество"
-    }
-  ],
-  "algebra": [
-    {
-      "formulaId": "square_sum",
-      "question": "Чему равен (a + b)²?",
-      "options": ["a² + 2ab + b²", "a² + b²", "a² - 2ab + b²", "a² - b²"],
-      "correct": 0,
-      "explanation": "(a + b)² = a² + 2ab + b² - квадрат суммы"
-    },
-    {
-      "formulaId": "square_diff",
-      "question": "Чему равен (a - b)²?",
-      "options": ["a² - 2ab + b²", "a² + b²", "a² + 2ab + b²", "a² - b²"],
-      "correct": 0,
-      "explanation": "(a - b)² = a² - 2ab + b² - квадрат разности"
-    },
-    {
-      "formulaId": "diff_squares",
-      "question": "Формула разности квадратов?",
-      "options": ["a² - b² = (a - b)(a + b)", "a² + b² = (a + b)²", "a² - b² = (a - b)²", "a² + b² = (a - b)(a + b)"],
-      "correct": 0,
-      "explanation": "a² - b² = (a - b)(a + b) - разность квадратов"
-    }
-  ]
+    "тригонометрия": [
+        # Основное тригонометрическое тождество
+        {
+            "q": "Какое основное тригонометрическое тождество?",
+            "options": ["sin²α + cos²α = 1", "sinα + cosα = 1", "tgα × ctgα = 1", "1 + tg²α = 1/cos²α"],
+            "correct": 0,
+            "explanation": "Основное тригонометрическое тождество: sin²α + cos²α = 1"
+        },
+        
+        # Определения тангенса и котангенса
+        {
+            "q": "Что такое тангенс угла α?",
+            "options": ["sinα/cosα", "cosα/sinα", "1/sinα", "1/cosα"],
+            "correct": 0,
+            "explanation": "tgα = sinα/cosα - отношение синуса к косинусу"
+        },
+        {
+            "q": "Что такое котангенс угла α?",
+            "options": ["cosα/sinα", "sinα/cosα", "1/tgα", "и вариант 1 и вариант 3 верны"],
+            "correct": 3,
+            "explanation": "ctgα = cosα/sinα = 1/tgα - отношение косинуса к синусу"
+        },
+        {
+            "q": "Чему равно tgα × ctgα?",
+            "options": ["1", "0", "sin²α", "cos²α"],
+            "correct": 0,
+            "explanation": "tgα × ctgα = (sinα/cosα) × (cosα/sinα) = 1"
+        },
+        
+        # Тождества с тангенсом и котангенсом
+        {
+            "q": "Чему равно 1 + tg²α?",
+            "options": ["1/cos²α", "1/sin²α", "cos²α", "sin²α"],
+            "correct": 0,
+            "explanation": "1 + tg²α = 1 + sin²α/cos²α = (cos²α + sin²α)/cos²α = 1/cos²α"
+        },
+        {
+            "q": "Чему равно 1 + ctg²α?",
+            "options": ["1/sin²α", "1/cos²α", "tg²α", "cos²α"],
+            "correct": 0,
+            "explanation": "1 + ctg²α = 1 + cos²α/sin²α = (sin²α + cos²α)/sin²α = 1/sin²α"
+        },
+        
+        # Формулы сложения (уже были, но добавим еще)
+        {
+            "q": "sin(α + β) = ?",
+            "options": ["sinαcosβ + cosαsinβ", "sinαcosβ - cosαsinβ", "cosαcosβ - sinαsinβ", "cosαcosβ + sinαsinβ"],
+            "correct": 0,
+            "explanation": "sin(α + β) = sinαcosβ + cosαsinβ"
+        },
+        {
+            "q": "sin(α - β) = ?",
+            "options": ["sinαcosβ - cosαsinβ", "sinαcosβ + cosαsinβ", "cosαcosβ + sinαsinβ", "cosαcosβ - sinαsinβ"],
+            "correct": 0,
+            "explanation": "sin(α - β) = sinαcosβ - cosαsinβ"
+        },
+        {
+            "q": "cos(α + β) = ?",
+            "options": ["cosαcosβ - sinαsinβ", "cosαcosβ + sinαsinβ", "sinαcosβ + cosαsinβ", "sinαcosβ - cosαsinβ"],
+            "correct": 0,
+            "explanation": "cos(α + β) = cosαcosβ - sinαsinβ"
+        },
+        {
+            "q": "cos(α - β) = ?",
+            "options": ["cosαcosβ + sinαsinβ", "cosαcosβ - sinαsinβ", "sinαcosβ + cosαsinβ", "sinαcosβ - cosαsinβ"],
+            "correct": 0,
+            "explanation": "cos(α - β) = cosαcosβ + sinαsinβ"
+        },
+        
+        # Формулы понижения степени
+        {
+            "q": "Как выразить sin²α через косинус двойного угла?",
+            "options": ["(1 - cos2α)/2", "(1 + cos2α)/2", "1 - cos²α", "2sinαcosα"],
+            "correct": 0,
+            "explanation": "sin²α = (1 - cos2α)/2"
+        },
+        {
+            "q": "Как выразить cos²α через косинус двойного угла?",
+            "options": ["(1 + cos2α)/2", "(1 - cos2α)/2", "1 - sin²α", "cos²α - sin²α"],
+            "correct": 0,
+            "explanation": "cos²α = (1 + cos2α)/2"
+        },
+        {
+            "q": "Как выразить tg²α?",
+            "options": ["(1 - cos2α)/(1 + cos2α)", "(1 + cos2α)/(1 - cos2α)", "sin²α/cos²α", "и вариант 1 и вариант 3 верны"],
+            "correct": 3,
+            "explanation": "tg²α = sin²α/cos²α = (1 - cos2α)/(1 + cos2α)"
+        },
+        
+        # Четность тригонометрических функций
+        {
+            "q": "Какая из функций является нечетной?",
+            "options": ["sinα", "cosα", "ctgα", "и sinα и ctgα"],
+            "correct": 3,
+            "explanation": "Нечетные: sin(-α) = -sinα, tg(-α) = -tgα, ctg(-α) = -ctgα"
+        },
+        {
+            "q": "Какая из функций является четной?",
+            "options": ["cosα", "sinα", "tgα", "ctgα"],
+            "correct": 0,
+            "explanation": "cos(-α) = cosα - четная функция"
+        },
+        
+        # Периодичность
+        {
+            "q": "Какой основной период у sinα и cosα?",
+            "options": ["2π", "π", "π/2", "4π"],
+            "correct": 0,
+            "explanation": "sin(α + 2π) = sinα, cos(α + 2π) = cosα - период 2π"
+        },
+        {
+            "q": "Какой основной период у tgα и ctgα?",
+            "options": ["π", "2π", "π/2", "4π"],
+            "correct": 0,
+            "explanation": "tg(α + π) = tgα, ctg(α + π) = ctgα - период π"
+        },
+        
+        # Формулы приведения
+        {
+            "q": "sin(π/2 - α) = ?",
+            "options": ["cosα", "sinα", "-cosα", "-sinα"],
+            "correct": 0,
+            "explanation": "sin(π/2 - α) = cosα"
+        },
+        {
+            "q": "cos(π/2 - α) = ?",
+            "options": ["sinα", "cosα", "-sinα", "-cosα"],
+            "correct": 0,
+            "explanation": "cos(π/2 - α) = sinα"
+        },
+        {
+            "q": "sin(π - α) = ?",
+            "options": ["sinα", "-sinα", "cosα", "-cosα"],
+            "correct": 0,
+            "explanation": "sin(π - α) = sinα"
+        },
+        {
+            "q": "cos(π - α) = ?",
+            "options": ["-cosα", "cosα", "sinα", "-sinα"],
+            "correct": 0,
+            "explanation": "cos(π - α) = -cosα"
+        },
+        {
+            "q": "tg(π + α) = ?",
+            "options": ["tgα", "-tgα", "ctgα", "-ctgα"],
+            "correct": 0,
+            "explanation": "tg(π + α) = tgα"
+        },
+        
+        # Табличные значения
+        {
+            "q": "sin(0) = ?",
+            "options": ["0", "1", "√2/2", "√3/2"],
+            "correct": 0,
+            "explanation": "sin(0) = 0"
+        },
+        {
+            "q": "cos(0) = ?",
+            "options": ["1", "0", "1/2", "√3/2"],
+            "correct": 0,
+            "explanation": "cos(0) = 1"
+        },
+        {
+            "q": "sin(π/6) = ?",
+            "options": ["1/2", "√2/2", "√3/2", "0"],
+            "correct": 0,
+            "explanation": "sin(π/6) = 1/2"
+        },
+        {
+            "q": "cos(π/3) = ?",
+            "options": ["1/2", "√2/2", "√3/2", "1"],
+            "correct": 0,
+            "explanation": "cos(π/3) = 1/2"
+        },
+        {
+            "q": "sin(π/4) = ?",
+            "options": ["√2/2", "1/2", "√3/2", "1"],
+            "correct": 0,
+            "explanation": "sin(π/4) = cos(π/4) = √2/2"
+        },
+        {
+            "q": "cos(π/2) = ?",
+            "options": ["0", "1", "-1", "1/2"],
+            "correct": 0,
+            "explanation": "cos(π/2) = 0"
+        },
+        {
+            "q": "sin(π) = ?",
+            "options": ["0", "1", "-1", "1/2"],
+            "correct": 0,
+            "explanation": "sin(π) = 0"
+        },
+        {
+            "q": "cos(π) = ?",
+            "options": ["-1", "0", "1", "1/2"],
+            "correct": 0,
+            "explanation": "cos(π) = -1"
+        },
+        {
+            "q": "tg(π/4) = ?",
+            "options": ["1", "0", "√3", "1/√3"],
+            "correct": 0,
+            "explanation": "tg(π/4) = 1"
+        },
+        {
+            "q": "ctg(π/3) = ?",
+            "options": ["1/√3", "√3", "1", "0"],
+            "correct": 0,
+            "explanation": "ctg(π/3) = 1/√3"
+        }
+    ],
+    "логарифмы": [
+        {
+            "q": "Чему равен logₐ(bc)?",
+            "options": ["logₐb + logₐc", "logₐb - logₐc", "logₐb / logₐc", "logₐb × logₐc"],
+            "correct": 0,
+            "explanation": "logₐ(bc) = logₐb + logₐc - логарифм произведения"
+        },
+        {
+            "q": "Чему равен logₐ(b/c)?",
+            "options": ["logₐb - logₐc", "logₐb + logₐc", "logₐb / logₐc", "logₐc - logₐb"],
+            "correct": 0,
+            "explanation": "logₐ(b/c) = logₐb - logₐc - логарифм частного"
+        }
+    ],
+    "производные": [
+        {
+            "q": "Чему равна производная xⁿ?",
+            "options": ["nxⁿ⁻¹", "xⁿ⁻¹", "nxⁿ", "(n-1)xⁿ"],
+            "correct": 0,
+            "explanation": "Производная xⁿ равна nxⁿ⁻¹"
+        },
+        {
+            "q": "Чему равна производная eˣ?",
+            "options": ["eˣ", "xeˣ", "ln(x)", "1/x"],
+            "correct": 0,
+            "explanation": "Производная eˣ равна eˣ"
+        }
+    ]
 }
