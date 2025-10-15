@@ -1,1 +1,100 @@
-
+{
+  "trigonometry": [
+    {
+      "question": "Чему равен sin(90°)?",
+      "options": ["0", "1", "-1", "0.5"],
+      "correct": 1,
+      "explanation": "sin(90°) = 1 - это максимальное значение синуса"
+    },
+    {
+      "question": "Чему равен cos(0°)?",
+      "options": ["0", "1", "-1", "0.5"],
+      "correct": 1,
+      "explanation": "cos(0°) = 1 - это максимальное значение косинуса"
+    },
+    {
+      "question": "Чему равен sin(α + β)?",
+      "options": ["sinαcosβ - cosαsinβ", "sinαcosβ + cosαsinβ", "cosαcosβ - sinαsinβ", "sinα + sinβ"],
+      "correct": 1,
+      "explanation": "sin(α + β) = sinαcosβ + cosαsinβ - формула синуса суммы"
+    },
+    {
+      "question": "Чему равен cos(2α)?",
+      "options": ["cos²α - sin²α", "2cosα", "1 - sin²α", "2sinαcosα"],
+      "correct": 0,
+      "explanation": "cos(2α) = cos²α - sin²α = 2cos²α - 1 = 1 - 2sin²α"
+    },
+    {
+      "question": "Что такое tgα?",
+      "options": ["sinα/cosα", "cosα/sinα", "1/sinα", "1/cosα"],
+      "correct": 0,
+      "explanation": "tgα = sinα/cosα - отношение синуса к косинусу"
+    },
+    {
+      "question": "Основное тригонометрическое тождество?",
+      "options": ["sin²α + cos²α = 1", "sinα + cosα = 1", "tgα × ctgα = 1", "1 + tg²α = 1/cos²α"],
+      "correct": 0,
+      "explanation": "sin²α + cos²α = 1 - основное тригонометрическое тождество"
+    },
+    {
+      "question": "Чему равен sin(π/2 - α)?",
+      "options": ["cosα", "sinα", "-cosα", "-sinα"],
+      "correct": 0,
+      "explanation": "sin(π/2 - α) = cosα - формула приведения"
+    }
+  ],
+  "algebra": [
+    {
+      "question": "Чему равен (a + b)²?",
+      "options": ["a² + 2ab + b²", "a² + b²", "a² - 2ab + b²", "a² - b²"],
+      "correct": 0,
+      "explanation": "(a + b)² = a² + 2ab + b² - квадрат суммы"
+    },
+    {
+      "question": "Чему равен (a - b)²?",
+      "options": ["a² - 2ab + b²", "a² + b²", "a² + 2ab + b²", "a² - b²"],
+      "correct": 0,
+      "explanation": "(a - b)² = a² - 2ab + b² - квадрат разности"
+    },
+    {
+      "question": "Формула разности квадратов?",
+      "options": ["a² - b² = (a - b)(a + b)", "a² + b² = (a + b)²", "a² - b² = (a - b)²", "a² + b² = (a - b)(a + b)"],
+      "correct": 0,
+      "explanation": "a² - b² = (a - b)(a + b) - разность квадратов"
+    }
+  ],
+  "geometry": [
+    {
+      "question": "Формула площади круга?",
+      "options": ["πr²", "2πr", "πd", "4πr²"],
+      "correct": 0,
+      "explanation": "S = πr² - площадь круга"
+    },
+    {
+      "question": "Формула длины окружности?",
+      "options": ["2πr", "πr²", "πd", "и 2πr и πd верны"],
+      "correct": 3,
+      "explanation": "C = 2πr = πd - длина окружности"
+    },
+    {
+      "question": "Формула площади треугольника?",
+      "options": ["½ × основание × высота", "основание × высота", "½ × периметр", "сторона²"],
+      "correct": 0,
+      "explanation": "S = ½ × a × h - площадь треугольника"
+    }
+  ],
+  "logarithms": [
+    {
+      "question": "Чему равен logₐ(bc)?",
+      "options": ["logₐb + logₐc", "logₐb - logₐc", "logₐb × logₐc", "logₐb / logₐc"],
+      "correct": 0,
+      "explanation": "logₐ(bc) = logₐb + logₐc - логарифм произведения"
+    },
+    {
+      "question": "Чему равен logₐ(b/c)?",
+      "options": ["logₐb - logₐc", "logₐb + logₐc", "logₐb / logₐc", "logₐc - logₐb"],
+      "correct": 0,
+      "explanation": "logₐ(b/c) = logₐb - logₐc - логарифм частного"
+    }
+  ]
+}
