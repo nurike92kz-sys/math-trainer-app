@@ -37,6 +37,29 @@
             width: 100%;
             cursor: pointer;
         }
+        .option {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            padding: 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 5px 0;
+            transition: all 0.3s;
+        }
+        .option:hover {
+            background: #e9ecef;
+        }
+        .option.correct {
+            background: #d4edda;
+            border-color: #c3e6cb;
+        }
+        .option.incorrect {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+        }
+        .hidden {
+            display: none;
+        }
         #debug {
             position: fixed;
             top: 10px;
@@ -48,29 +71,61 @@
             z-index: 10000;
             font-size: 14px;
         }
+        .back-btn {
+            background: #6c757d;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
-    <!-- Debug блок всегда виден -->
     <div id="debug">Загрузка...</div>
     
     <div class="container">
         <!-- Главный экран -->
         <div id="mainScreen">
             <div style="text-align: center;">
-                <h1>🎓 Математика</h1>
-                <p>Простая версия</p>
+                <h1>🎓 Математический тренажёр</h1>
+                <p>Простая версия с викториной</p>
             </div>
             
             <div class="card">
-                <button onclick="showMessage('Тригонометрия')">📐 Тригонометрия</button>
-                <button onclick="showMessage('Алгебра')">🔢 Алгебра</button>
+                <button onclick="startQuiz('trigonometry')">📐 Тригонометрия</button>
+                <button onclick="startQuiz('algebra')">🔢 Алгебра</button>
                 <button onclick="testTelegram()">🤖 Проверить Telegram</button>
-                <button onclick="testAlert()">🔔 Тест Alert</button>
             </div>
             
             <div class="card">
                 <div id="status">Статус: Загрузка...</div>
+            </div>
+        </div>
+
+        <!-- Экран викторины -->
+        <div id="quizScreen" class="hidden">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <h2 id="quizTitle">Викторина</h2>
+            </div>
+            
+            <div class="card">
+                <div style="font-size: 18px; font-weight: bold; margin-bottom: 15px;" id="questionText">
+                    Вопрос загружается...
+                </div>
+                
+                <div id="optionsContainer">
+                    <!-- Варианты ответов появятся здесь -->
+                </div>
+            </div>
+            
+            <button class="back-btn" onclick="backToMain()">← Назад</button>
+        </div>
+
+        <!-- Экран результата -->
+        <div id="resultScreen" class="hidden">
+            <div class="card">
+                <h2 id="resultTitle">Результат</h2>
+                <p id="resultMessage"></p>
+                <p id="explanationText"></p>
+                <button onclick="nextQuestion()">Следующий вопрос</button>
+                <button class="back-btn" onclick="backToMain()">← На главную</button>
             </div>
         </div>
     </div>
@@ -82,6 +137,35 @@
         const debug = document.getElementById('debug');
         const status = document.getElementById('status');
         
+        // База вопросов
+        const questions = {
+            trigonometry: [
+                {
+                    question: "Чему равен sin(90°)?",
+                    options: ["0", "1", "-1", "0.5"],
+                    correct: 1,
+                    explanation: "sin(90°) = 1 - это максимальное значение синуса"
+                },
+                {
+                    question: "Чему равен cos(0°)?",
+                    options: ["0", "1", "-1", "0.5"],
+                    correct: 1, 
+                    explanation: "cos(0°) = 1 - это максимальное значение косинуса"
+                }
+            ],
+            algebra: [
+                {
+                    question: "Чему равен (a + b)²?",
+                    options: ["a² + 2ab + b²", "a² + b²", "a² - 2ab + b²", "a² - b²"],
+                    correct: 0,
+                    explanation: "(a + b)² = a² + 2ab + b² - формула квадрата суммы"
+                }
+            ]
+        };
+
+        let currentTopic = '';
+        let currentQuestionIndex = 0;
+
         // Функция обновления debug
         function updateDebug(message) {
             if (debug) {
@@ -97,22 +181,113 @@
             }
         }
         
-        // Простые тестовые функции
-        function showMessage(topic) {
-            updateDebug('Нажата кнопка: ' + topic);
-            alert('Вы выбрали: ' + topic);
+        // Запуск викторины
+        function startQuiz(topic) {
+            updateDebug('Запускаем викторину: ' + topic);
+            
+            currentTopic = topic;
+            currentQuestionIndex = 0;
+            
+            // Прячем главный экран, показываем викторину
+            document.getElementById('mainScreen').classList.add('hidden');
+            document.getElementById('quizScreen').classList.remove('hidden');
+            document.getElementById('resultScreen').classList.add('hidden');
+            
+            // Устанавливаем заголовок
+            const titles = {
+                trigonometry: '📐 Тригонометрия',
+                algebra: '🔢 Алгебра'
+            };
+            document.getElementById('quizTitle').textContent = titles[topic] || topic;
+            
+            // Показываем первый вопрос
+            showQuestion();
         }
         
-        function testAlert() {
-            updateDebug('Тест Alert');
-            alert('✅ Alert работает!');
+        // Показ вопроса
+        function showQuestion() {
+            updateDebug('Показываем вопрос ' + currentQuestionIndex);
+            
+            const topicQuestions = questions[currentTopic];
+            
+            if (!topicQuestions || currentQuestionIndex >= topicQuestions.length) {
+                updateDebug('Вопросы закончились');
+                backToMain();
+                return;
+            }
+            
+            const question = topicQuestions[currentQuestionIndex];
+            const optionsContainer = document.getElementById('optionsContainer');
+            
+            // Очищаем контейнер
+            optionsContainer.innerHTML = '';
+            
+            // Показываем вопрос
+            document.getElementById('questionText').textContent = question.question;
+            
+            // Добавляем варианты ответов
+            question.options.forEach((option, index) => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'option';
+                optionElement.textContent = option;
+                optionElement.onclick = function() {
+                    checkAnswer(index, question.correct, question.explanation);
+                };
+                optionsContainer.appendChild(optionElement);
+            });
         }
         
+        // Проверка ответа
+        function checkAnswer(selectedIndex, correctIndex, explanation) {
+            updateDebug('Проверяем ответ: ' + selectedIndex + ' vs ' + correctIndex);
+            
+            const options = document.querySelectorAll('.option');
+            const isCorrect = selectedIndex === correctIndex;
+            
+            // Подсвечиваем ответы
+            options.forEach((option, index) => {
+                if (index === correctIndex) {
+                    option.classList.add('correct');
+                } else if (index === selectedIndex && !isCorrect) {
+                    option.classList.add('incorrect');
+                }
+                option.style.pointerEvents = 'none'; // Блокируем клики
+            });
+            
+            // Показываем результат через 1 секунду
+            setTimeout(() => {
+                document.getElementById('quizScreen').classList.add('hidden');
+                document.getElementById('resultScreen').classList.remove('hidden');
+                
+                document.getElementById('resultTitle').textContent = isCorrect ? '✅ Правильно!' : '❌ Неправильно';
+                document.getElementById('resultMessage').textContent = isCorrect ? 
+                    'Отличный ответ!' : 'Попробуйте ещё раз';
+                document.getElementById('explanationText').textContent = explanation;
+                
+            }, 1000);
+        }
+        
+        // Следующий вопрос
+        function nextQuestion() {
+            currentQuestionIndex++;
+            document.getElementById('resultScreen').classList.add('hidden');
+            document.getElementById('quizScreen').classList.remove('hidden');
+            showQuestion();
+        }
+        
+        // Назад на главную
+        function backToMain() {
+            document.getElementById('quizScreen').classList.add('hidden');
+            document.getElementById('resultScreen').classList.add('hidden');
+            document.getElementById('mainScreen').classList.remove('hidden');
+        }
+        
+        // Тест Telegram
         function testTelegram() {
             updateDebug('Проверяем Telegram...');
             
             if (window.Telegram && Telegram.WebApp) {
-                alert('✅ Telegram Web App доступен!');
+                alert('✅ Telegram Web App доступен!\nВерсия: ' + (Telegram.WebApp.version || 'неизвестна'));
                 updateDebug('Telegram: ДА');
             } else {
                 alert('❌ Telegram Web App НЕ доступен');
@@ -124,20 +299,19 @@
         document.addEventListener('DOMContentLoaded', function() {
             console.log('DOM загружен');
             updateDebug('DOM загружен');
-            updateStatus('Готов');
+            updateStatus('Готов к работе');
             
-            // Проверяем Telegram
+            // Инициализация Telegram
             if (window.Telegram && Telegram.WebApp) {
                 try {
                     const tg = Telegram.WebApp;
                     tg.ready();
                     updateDebug('Telegram инициализирован');
                     
-                    // Пытаемся расширить
                     setTimeout(() => {
                         tg.expand();
                         updateDebug('Расширено на весь экран');
-                    }, 1000);
+                    }, 500);
                     
                 } catch (error) {
                     updateDebug('Ошибка Telegram: ' + error.message);
