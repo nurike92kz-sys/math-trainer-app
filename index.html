@@ -1,17 +1,3 @@
-<!-- Добавь этот div перед закрывающим </body> -->
-<div id="debug" style="position: fixed; top: 10px; left: 10px; background: red; color: white; padding: 10px; z-index: 9999; display: none;">
-    Debug Info
-</div>
-
-<script>
-// Добавь эту функцию для отладки
-function showDebug(message) {
-    const debug = document.getElementById('debug');
-    debug.style.display = 'block';
-    debug.innerHTML = message;
-    console.log('DEBUG:', message);
-}
-</script>
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -20,14 +6,13 @@ function showDebug(message) {
     <title>Математический тренажёр</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        /* Оставляем только базовые стили */
         body {
-            font-family: Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
+            margin: 0;
             padding: 20px;
             color: white;
-            margin: 0;
         }
         .container {
             max-width: 800px;
@@ -39,6 +24,7 @@ function showDebug(message) {
             border-radius: 20px;
             padding: 25px;
             margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
         button {
             background: #667eea;
@@ -54,37 +40,42 @@ function showDebug(message) {
         .hidden {
             display: none;
         }
-        #debug {
+        .debug-info {
             position: fixed;
             top: 10px;
             left: 10px;
-            background: red;
+            background: rgba(0,0,0,0.8);
             color: white;
             padding: 10px;
-            z-index: 9999;
+            border-radius: 5px;
+            font-size: 12px;
+            max-width: 300px;
+            z-index: 10000;
         }
     </style>
 </head>
 <body>
-    <div id="debug">Загрузка...</div>
-    
+    <div class="debug-info" id="debugInfo">
+        Инициализация...
+    </div>
+
     <div class="container">
-        <!-- Простой главный экран -->
+        <!-- Главный экран -->
         <div id="mainScreen" class="hidden">
             <div style="text-align: center; margin-bottom: 30px;">
                 <h1>🎓 Математический тренажёр</h1>
-                <p>Упрощенная версия для отладки</p>
+                <p>Стабильная версия</p>
             </div>
             
             <div class="card">
-                <h3>Тестовые кнопки:</h3>
-                <button onclick="testFunction()">Тест 1 - Простая функция</button>
-                <button onclick="loadSimpleQuestions()">Тест 2 - Загрузить вопросы</button>
-                <button onclick="showSuccess()">Тест 3 - Показать успех</button>
+                <h3>Доступные темы:</h3>
+                <button onclick="startTopic('trigonometry')">📐 Тригонометрия</button>
+                <button onclick="startTopic('algebra')">🔢 Алгебра</button>
+                <button onclick="showTelegramInfo()">ℹ️ Информация о Telegram</button>
             </div>
             
             <div class="card">
-                <div id="status">Статус: Инициализация...</div>
+                <div id="userInfo">Загрузка информации о пользователе...</div>
             </div>
         </div>
 
@@ -92,90 +83,271 @@ function showDebug(message) {
         <div id="loadingScreen">
             <div class="card">
                 <div style="text-align: center;">
-                    <h2>🔄 Загрузка...</h2>
-                    <p>Проверяем базовую функциональность</p>
+                    <h2>🔄 Инициализация приложения</h2>
+                    <p id="loadingText">Проверка окружения...</p>
                 </div>
+            </div>
+        </div>
+
+        <!-- Экран викторины -->
+        <div id="quizScreen" class="hidden">
+            <div style="text-align: center; margin-bottom: 30px;">
+                <h2 id="topicTitle">Тема</h2>
+            </div>
+            
+            <div class="card">
+                <div style="font-size: 18px; margin-bottom: 20px;" id="questionText">Вопрос</div>
+                <div id="optionsContainer">
+                    <!-- Варианты появятся здесь -->
+                </div>
+            </div>
+            
+            <div class="card hidden" id="resultCard">
+                <h3 id="resultText"></h3>
+                <p id="explanationText"></p>
+                <button onclick="backToMain()">← На главную</button>
             </div>
         </div>
     </div>
 
     <script>
-        // Простой код для отладки
-        const debug = document.getElementById('debug');
-        const status = document.getElementById('status');
+        // Глобальные переменные
+        let tg = null;
+        let isTelegram = false;
         
+        // Простые вопросы для тестирования
+        const simpleQuestions = {
+            trigonometry: [
+                {
+                    question: "Чему равен sin(90°)?",
+                    options: ["0", "1", "-1", "0.5"],
+                    correct: 1,
+                    explanation: "sin(90°) = 1"
+                },
+                {
+                    question: "Чему равен cos(0°)?",
+                    options: ["0", "1", "-1", "0.5"], 
+                    correct: 1,
+                    explanation: "cos(0°) = 1"
+                }
+            ],
+            algebra: [
+                {
+                    question: "Чему равен (a + b)²?",
+                    options: ["a² + 2ab + b²", "a² + b²", "a² - 2ab + b²", "a² - b²"],
+                    correct: 0,
+                    explanation: "(a + b)² = a² + 2ab + b²"
+                }
+            ]
+        };
+
+        // Функция для отладки
         function updateDebug(message) {
-            debug.textContent = message;
+            const debug = document.getElementById('debugInfo');
+            if (debug) {
+                debug.innerHTML = message + '<br>' + debug.innerHTML;
+            }
             console.log('DEBUG:', message);
         }
-        
-        function updateStatus(message) {
-            if (status) status.textContent = 'Статус: ' + message;
-        }
-        
-        // Проверяем базовые вещи
-        updateDebug('1. Начало выполнения');
-        
-        // Проверяем Telegram Web App
-        let tg = null;
-        if (window.Telegram && Telegram.WebApp) {
-            updateDebug('2. Telegram Web App найден');
-            tg = Telegram.WebApp;
-            
-            try {
-                tg.ready();
-                updateDebug('3. Telegram.ready() выполнен');
-                
-                // Не вызываем expand() сразу - это может вызывать проблемы
-                // tg.expand();
-                
-                updateDebug('4. Базовая инициализация завершена');
-            } catch (error) {
-                updateDebug('ОШИБКА в Telegram: ' + error.message);
+
+        // Функция для обновления текста загрузки
+        function updateLoading(text) {
+            const loadingText = document.getElementById('loadingText');
+            if (loadingText) {
+                loadingText.textContent = text;
             }
-        } else {
-            updateDebug('2. Telegram Web App НЕ найден (работаем в браузере)');
         }
-        
-        // Простые тестовые функции
-        function testFunction() {
-            updateDebug('Тест: функция работает!');
-            alert('Функция testFunction работает!');
-        }
-        
-        function loadSimpleQuestions() {
-            updateDebug('Загружаем простые вопросы...');
+
+        // Инициализация Telegram Web App - ПРАВИЛЬНЫЙ ПОДХОД
+        function initTelegram() {
+            updateDebug('1. Проверяем Telegram Web App...');
             
-            // Создаем простые вопросы вручную
-            const simpleQuestions = {
-                trigonometry: [
-                    {
-                        question: "Чему равен sin(90°)?",
-                        options: ["0", "1", "-1", "0.5"],
-                        correct: 1,
-                        explanation: "sin(90°) = 1"
-                    }
-                ]
+            // Проверяем, находимся ли мы в Telegram
+            if (window.Telegram && Telegram.WebApp) {
+                updateDebug('2. Telegram Web App обнаружен');
+                tg = Telegram.WebApp;
+                isTelegram = true;
+                
+                try {
+                    // ВАЖНО: ready() должен быть вызван ДО любых других действий
+                    tg.ready();
+                    updateDebug('3. tg.ready() успешно');
+                    
+                    // Даем время на инициализацию
+                    setTimeout(() => {
+                        updateDebug('4. Расширяем на весь экран');
+                        
+                        // Плавно расширяем на весь экран
+                        tg.expand();
+                        
+                        // Настраиваем цвета
+                        tg.setHeaderColor('#667eea');
+                        tg.setBackgroundColor('#667eea');
+                        
+                        updateDebug('5. Инициализация Telegram завершена');
+                        showUserInfo();
+                        
+                    }, 100);
+                    
+                } catch (error) {
+                    updateDebug('ОШИБКА Telegram: ' + error.message);
+                    handleTelegramError();
+                }
+            } else {
+                updateDebug('2. Работаем в браузере (не в Telegram)');
+                isTelegram = false;
+                handleNonTelegram();
+            }
+        }
+
+        // Обработка ошибок Telegram
+        function handleTelegramError() {
+            updateDebug('Переходим в режим браузера');
+            isTelegram = false;
+            showMainScreen();
+        }
+
+        // Режим без Telegram
+        function handleNonTelegram() {
+            updateDebug('Запуск в браузерном режиме');
+            setTimeout(() => {
+                showMainScreen();
+            }, 1000);
+        }
+
+        // Показываем информацию о пользователе
+        function showUserInfo() {
+            const userInfo = document.getElementById('userInfo');
+            
+            if (isTelegram && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                const user = tg.initDataUnsafe.user;
+                userInfo.innerHTML = `
+                    <h3>👤 Информация о пользователе:</h3>
+                    <p><strong>Имя:</strong> ${user.first_name || 'Не указано'}</p>
+                    <p><strong>ID:</strong> ${user.id}</p>
+                    <p><strong>Язык:</strong> ${user.language_code || 'Не указан'}</p>
+                `;
+            } else {
+                userInfo.innerHTML = `
+                    <h3>👤 Гостевой режим</h3>
+                    <p>Вы используете приложение в браузере</p>
+                `;
+            }
+        }
+
+        // Показываем главный экран
+        function showMainScreen() {
+            updateDebug('Показываем главный экран');
+            updateLoading('Загрузка завершена');
+            
+            setTimeout(() => {
+                document.getElementById('loadingScreen').classList.add('hidden');
+                document.getElementById('mainScreen').classList.remove('hidden');
+            }, 500);
+        }
+
+        // Запускаем тему
+        function startTopic(topic) {
+            updateDebug('Запускаем тему: ' + topic);
+            
+            document.getElementById('mainScreen').classList.add('hidden');
+            document.getElementById('quizScreen').classList.remove('hidden');
+            
+            const topicNames = {
+                trigonometry: '📐 Тригонометрия',
+                algebra: '🔢 Алгебра'
             };
             
-            updateDebug('Вопросы созданы вручную');
-            alert('Вопросы загружены: ' + simpleQuestions.trigonometry[0].question);
+            document.getElementById('topicTitle').textContent = topicNames[topic] || topic;
+            showQuestion(topic, 0);
         }
-        
-        function showSuccess() {
-            updateDebug('Показываем успех');
-            alert('✅ Всё работает отлично!');
+
+        // Показываем вопрос
+        function showQuestion(topic, index) {
+            const questions = simpleQuestions[topic];
+            if (!questions || index >= questions.length) {
+                backToMain();
+                return;
+            }
+            
+            const question = questions[index];
+            const optionsContainer = document.getElementById('optionsContainer');
+            const resultCard = document.getElementById('resultCard');
+            
+            // Сбрасываем состояние
+            optionsContainer.innerHTML = '';
+            resultCard.classList.add('hidden');
+            
+            // Показываем вопрос
+            document.getElementById('questionText').textContent = question.question;
+            
+            // Добавляем варианты ответов
+            question.options.forEach((option, i) => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.onclick = () => checkAnswer(i, question.correct, question.explanation);
+                optionsContainer.appendChild(button);
+            });
         }
-        
-        // Показываем главный экран через 2 секунды
-        setTimeout(() => {
-            updateDebug('5. Показываем главный экран');
-            document.getElementById('loadingScreen').classList.add('hidden');
+
+        // Проверяем ответ
+        function checkAnswer(selected, correct, explanation) {
+            const resultCard = document.getElementById('resultCard');
+            const resultText = document.getElementById('resultText');
+            const explanationText = document.getElementById('explanationText');
+            
+            if (selected === correct) {
+                resultText.textContent = '✅ Правильно!';
+                resultText.style.color = '#4CAF50';
+            } else {
+                resultText.textContent = '❌ Неправильно';
+                resultText.style.color = '#f44336';
+            }
+            
+            explanationText.textContent = explanation;
+            resultCard.classList.remove('hidden');
+        }
+
+        // Назад на главную
+        function backToMain() {
+            document.getElementById('quizScreen').classList.add('hidden');
             document.getElementById('mainScreen').classList.remove('hidden');
-            updateStatus('Готов к работе');
-        }, 2000);
-        
-        updateDebug('6. Скрипт полностью загружен');
+        }
+
+        // Показываем информацию о Telegram
+        function showTelegramInfo() {
+            let info = 'Информация о Telegram Web App:\n\n';
+            info += 'isTelegram: ' + isTelegram + '\n';
+            
+            if (tg) {
+                info += 'tg.version: ' + (tg.version || 'N/A') + '\n';
+                info += 'tg.platform: ' + (tg.platform || 'N/A') + '\n';
+                info += 'tg.initData: ' + (tg.initData ? 'Есть' : 'Нет') + '\n';
+                
+                if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                    info += 'user: ' + tg.initDataUnsafe.user.first_name + '\n';
+                }
+            }
+            
+            alert(info);
+        }
+
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            updateDebug('0. DOM загружен');
+            updateLoading('Инициализация приложения...');
+            
+            // Даем время на рендеринг, потом инициализируем Telegram
+            setTimeout(() => {
+                initTelegram();
+            }, 100);
+        });
+
+        // Обработчик ошибок
+        window.addEventListener('error', function(e) {
+            updateDebug('ГЛОБАЛЬНАЯ ОШИБКА: ' + e.message);
+            console.error('Global error:', e);
+        });
     </script>
 </body>
 </html>
