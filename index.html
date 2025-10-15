@@ -1,277 +1,158 @@
-<script>
-    // Глобальные переменные
-    let tg = null;
-    let isTelegram = false;
-    let currentTopic = '';
-    let currentQuestionIndex = 0;
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Математический тренажёр</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            color: white;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .card {
+            background: white;
+            color: black;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 10px 0;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 16px;
+            margin: 5px 0;
+            width: 100%;
+            cursor: pointer;
+        }
+        #debug {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: red;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 10000;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Debug блок всегда виден -->
+    <div id="debug">Загрузка...</div>
     
-    // Простые вопросы для тестирования
-    const simpleQuestions = {
-        trigonometry: [
-            {
-                question: "Чему равен sin(90°)?",
-                options: ["0", "1", "-1", "0.5"],
-                correct: 1,
-                explanation: "sin(90°) = 1"
-            },
-            {
-                question: "Чему равен cos(0°)?",
-                options: ["0", "1", "-1", "0.5"], 
-                correct: 1,
-                explanation: "cos(0°) = 1"
-            }
-        ],
-        algebra: [
-            {
-                question: "Чему равен (a + b)²?",
-                options: ["a² + 2ab + b²", "a² + b²", "a² - 2ab + b²", "a² - b²"],
-                correct: 0,
-                explanation: "(a + b)² = a² + 2ab + b²"
-            }
-        ]
-    };
-
-    // Функция для отладки
-    function updateDebug(message) {
-        const debug = document.getElementById('debugInfo');
-        if (debug) {
-            debug.innerHTML = message + '<br>' + debug.innerHTML;
-        }
-        console.log('DEBUG:', message);
-    }
-
-    // Функция для обновления текста загрузки
-    function updateLoading(text) {
-        const loadingText = document.getElementById('loadingText');
-        if (loadingText) {
-            loadingText.textContent = text;
-        }
-    }
-
-    // Инициализация Telegram Web App
-    function initTelegram() {
-        updateDebug('1. Проверяем Telegram Web App...');
-        
-        if (window.Telegram && Telegram.WebApp) {
-            updateDebug('2. Telegram Web App обнаружен');
-            tg = Telegram.WebApp;
-            isTelegram = true;
+    <div class="container">
+        <!-- Главный экран -->
+        <div id="mainScreen">
+            <div style="text-align: center;">
+                <h1>🎓 Математика</h1>
+                <p>Простая версия</p>
+            </div>
             
-            try {
-                tg.ready();
-                updateDebug('3. tg.ready() успешно');
-                
-                setTimeout(() => {
-                    updateDebug('4. Расширяем на весь экран');
-                    tg.expand();
-                    tg.setHeaderColor('#667eea');
-                    tg.setBackgroundColor('#667eea');
-                    updateDebug('5. Инициализация Telegram завершена');
-                    showUserInfo();
-                    
-                }, 100);
-                
-            } catch (error) {
-                updateDebug('ОШИБКА Telegram: ' + error.message);
-                handleTelegramError();
+            <div class="card">
+                <button onclick="showMessage('Тригонометрия')">📐 Тригонометрия</button>
+                <button onclick="showMessage('Алгебра')">🔢 Алгебра</button>
+                <button onclick="testTelegram()">🤖 Проверить Telegram</button>
+                <button onclick="testAlert()">🔔 Тест Alert</button>
+            </div>
+            
+            <div class="card">
+                <div id="status">Статус: Загрузка...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Простейший код который точно работает
+        console.log('=== СКРИПТ НАЧАЛ РАБОТУ ===');
+        
+        const debug = document.getElementById('debug');
+        const status = document.getElementById('status');
+        
+        // Функция обновления debug
+        function updateDebug(message) {
+            if (debug) {
+                debug.textContent = message;
             }
-        } else {
-            updateDebug('2. Работаем в браузере');
-            isTelegram = false;
-            handleNonTelegram();
-        }
-    }
-
-    // Обработка ошибок Telegram
-    function handleTelegramError() {
-        updateDebug('Переходим в режим браузера');
-        isTelegram = false;
-        showMainScreen();
-    }
-
-    // Режим без Telegram
-    function handleNonTelegram() {
-        updateDebug('Запуск в браузерном режиме');
-        setTimeout(() => {
-            showMainScreen();
-        }, 1000);
-    }
-
-    // Показываем информацию о пользователе
-    function showUserInfo() {
-        const userInfo = document.getElementById('userInfo');
-        
-        if (isTelegram && tg.initDataUnsafe && tg.initDataUnsafe.user) {
-            const user = tg.initDataUnsafe.user;
-            userInfo.innerHTML = `
-                <h3>👤 Информация о пользователе:</h3>
-                <p><strong>Имя:</strong> ${user.first_name || 'Не указано'}</p>
-                <p><strong>ID:</strong> ${user.id}</p>
-                <p><strong>Язык:</strong> ${user.language_code || 'Не указан'}</p>
-            `;
-        } else {
-            userInfo.innerHTML = `
-                <h3>👤 Гостевой режим</h3>
-                <p>Вы используете приложение в браузере</p>
-            `;
+            console.log('DEBUG:', message);
         }
         
-        showMainScreen();
-    }
-
-    // Показываем главный экран
-    function showMainScreen() {
-        updateDebug('Показываем главный экран');
-        updateLoading('Загрузка завершена');
-        
-        setTimeout(() => {
-            document.getElementById('loadingScreen').classList.add('hidden');
-            document.getElementById('mainScreen').classList.remove('hidden');
-        }, 500);
-    }
-
-    // ЗАПУСКАЕМ ТЕМУ - ИСПРАВЛЕННАЯ ФУНКЦИЯ
-    function startTopic(topic) {
-        updateDebug('Запускаем тему: ' + topic);
-        
-        // Сохраняем текущую тему
-        currentTopic = topic;
-        currentQuestionIndex = 0;
-        
-        // Прячем главный экран и показываем викторину
-        document.getElementById('mainScreen').classList.add('hidden');
-        document.getElementById('quizScreen').classList.remove('hidden');
-        
-        // Устанавливаем название темы
-        const topicNames = {
-            trigonometry: '📐 Тригонометрия',
-            algebra: '🔢 Алгебра'
-        };
-        
-        document.getElementById('topicTitle').textContent = topicNames[topic] || topic;
-        
-        // Показываем первый вопрос
-        showCurrentQuestion();
-    }
-
-    // ПОКАЗЫВАЕМ ТЕКУЩИЙ ВОПРОС
-    function showCurrentQuestion() {
-        updateDebug('Показываем вопрос ' + currentQuestionIndex + ' для темы ' + currentTopic);
-        
-        const questions = simpleQuestions[currentTopic];
-        
-        // Проверяем, есть ли вопросы
-        if (!questions || questions.length === 0) {
-            updateDebug('ОШИБКА: Нет вопросов для темы ' + currentTopic);
-            backToMain();
-            return;
+        // Функция обновления статуса
+        function updateStatus(message) {
+            if (status) {
+                status.textContent = 'Статус: ' + message;
+            }
         }
         
-        // Проверяем, не вышли ли за пределы
-        if (currentQuestionIndex >= questions.length) {
-            updateDebug('Все вопросы пройдены');
-            backToMain();
-            return;
+        // Простые тестовые функции
+        function showMessage(topic) {
+            updateDebug('Нажата кнопка: ' + topic);
+            alert('Вы выбрали: ' + topic);
         }
         
-        const question = questions[currentQuestionIndex];
-        const optionsContainer = document.getElementById('optionsContainer');
-        const resultCard = document.getElementById('resultCard');
+        function testAlert() {
+            updateDebug('Тест Alert');
+            alert('✅ Alert работает!');
+        }
         
-        // Сбрасываем состояние
-        optionsContainer.innerHTML = '';
-        resultCard.classList.add('hidden');
+        function testTelegram() {
+            updateDebug('Проверяем Telegram...');
+            
+            if (window.Telegram && Telegram.WebApp) {
+                alert('✅ Telegram Web App доступен!');
+                updateDebug('Telegram: ДА');
+            } else {
+                alert('❌ Telegram Web App НЕ доступен');
+                updateDebug('Telegram: НЕТ');
+            }
+        }
         
-        // Показываем вопрос
-        document.getElementById('questionText').textContent = question.question;
-        
-        // Добавляем варианты ответов
-        question.options.forEach((option, index) => {
-            const button = document.createElement('button');
-            button.textContent = option;
-            button.onclick = function() {
-                checkAnswer(index, question.correct, question.explanation);
-            };
-            optionsContainer.appendChild(button);
+        // Инициализация при загрузке
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM загружен');
+            updateDebug('DOM загружен');
+            updateStatus('Готов');
+            
+            // Проверяем Telegram
+            if (window.Telegram && Telegram.WebApp) {
+                try {
+                    const tg = Telegram.WebApp;
+                    tg.ready();
+                    updateDebug('Telegram инициализирован');
+                    
+                    // Пытаемся расширить
+                    setTimeout(() => {
+                        tg.expand();
+                        updateDebug('Расширено на весь экран');
+                    }, 1000);
+                    
+                } catch (error) {
+                    updateDebug('Ошибка Telegram: ' + error.message);
+                }
+            }
         });
         
-        updateDebug('Вопрос показан: ' + question.question);
-    }
-
-    // ПРОВЕРЯЕМ ОТВЕТ
-    function checkAnswer(selectedIndex, correctIndex, explanation) {
-        updateDebug('Проверяем ответ: выбран ' + selectedIndex + ', правильный ' + correctIndex);
+        // Обработчик глобальных ошибок
+        window.addEventListener('error', function(e) {
+            console.error('Глобальная ошибка:', e);
+            updateDebug('ОШИБКА: ' + e.message);
+        });
         
-        const resultCard = document.getElementById('resultCard');
-        const resultText = document.getElementById('resultText');
-        const explanationText = document.getElementById('explanationText');
-        const optionsContainer = document.getElementById('optionsContainer');
-        
-        // Блокируем кнопки
-        const buttons = optionsContainer.getElementsByTagName('button');
-        for (let button of buttons) {
-            button.disabled = true;
-        }
-        
-        if (selectedIndex === correctIndex) {
-            resultText.textContent = '✅ Правильно!';
-            resultText.style.color = '#4CAF50';
-        } else {
-            resultText.textContent = '❌ Неправильно';
-            resultText.style.color = '#f44336';
-        }
-        
-        explanationText.textContent = explanation;
-        resultCard.classList.remove('hidden');
-        
-        updateDebug('Ответ проверен');
-    }
-
-    // СЛЕДУЮЩИЙ ВОПРОС
-    function nextQuestion() {
-        currentQuestionIndex++;
-        showCurrentQuestion();
-    }
-
-    // НАЗАД НА ГЛАВНУЮ
-    function backToMain() {
-        updateDebug('Возвращаемся на главную');
-        document.getElementById('quizScreen').classList.add('hidden');
-        document.getElementById('resultCard').classList.add('hidden');
-        document.getElementById('mainScreen').classList.remove('hidden');
-    }
-
-    // ПОКАЗЫВАЕМ ИНФОРМАЦИЮ О TELEGRAM
-    function showTelegramInfo() {
-        let info = 'Информация о Telegram Web App:\n\n';
-        info += 'isTelegram: ' + isTelegram + '\n';
-        
-        if (tg) {
-            info += 'tg.version: ' + (tg.version || 'N/A') + '\n';
-            info += 'tg.platform: ' + (tg.platform || 'N/A') + '\n';
-            info += 'tg.initData: ' + (tg.initData ? 'Есть' : 'Нет') + '\n';
-            
-            if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-                info += 'user: ' + tg.initDataUnsafe.user.first_name + '\n';
-            }
-        }
-        
-        alert(info);
-    }
-
-    // ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ СТРАНИЦЫ
-    document.addEventListener('DOMContentLoaded', function() {
-        updateDebug('0. DOM загружен');
-        updateLoading('Инициализация приложения...');
-        
-        setTimeout(() => {
-            initTelegram();
-        }, 100);
-    });
-
-    // ОБРАБОТЧИК ОШИБОК
-    window.addEventListener('error', function(e) {
-        updateDebug('ГЛОБАЛЬНАЯ ОШИБКА: ' + e.message);
-        console.error('Global error:', e);
-    });
-</script>
+        console.log('=== СКРИПТ ЗАГРУЖЕН ===');
+        updateDebug('Скрипт загружен');
+    </script>
+</body>
+</html>
